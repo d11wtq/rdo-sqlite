@@ -22,7 +22,7 @@ And install with Bundler:
 
 ## Usage
 
-The registered URI schemes are sqlite:// and sqlite3://
+The registered URI schemes are sqlite: and sqlite3:
 
 ``` ruby
 require "rdo"
