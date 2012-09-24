@@ -40,8 +40,6 @@ static VALUE rdo_sqlite_driver_open(VALUE self) {
     return Qtrue;
   }
 
-  // Filename can be :memory:
-  // Filename can be blank (creates a temporary file, that will be cleaned up)
   if (sqlite3_open_v2(
         RSTRING_PTR(rb_funcall(self, rb_intern("filename"), 0)),
         &(driver->db),
