@@ -139,8 +139,22 @@ static VALUE rdo_sqlite_statement_executor_command(VALUE self) {
 /** Fetch the value from the given column in the result and convert to a Ruby type */
 static VALUE rdo_sqlite_cast_value(sqlite3_stmt * stmt, int col) {
   switch (sqlite3_column_type(stmt, col)) {
+    case SQLITE_NULL:
+      return Qnil;
+
     case SQLITE_INTEGER:
-      return INT2NUM(sqlite3_column_int64(stmt, col));
+      return LL2NUM(sqlite3_column_int64(stmt, col));
+
+    case SQLITE_FLOAT:
+      return DBL2NUM(sqlite3_column_double(stmt, col));
+
+    case SQLITE_TEXT:
+      return RDO_STRING((const char *) sqlite3_column_text(stmt, col),
+          sqlite3_column_bytes(stmt, col), 1);
+
+    case SQLITE_BLOB:
+      return RDO_BINARY_STRING((const char *) sqlite3_column_blob(stmt, col),
+          sqlite3_column_bytes(stmt, col));
 
     default:
       return RDO_BINARY_STRING((const char *) sqlite3_column_text(stmt, col),
@@ -152,8 +166,64 @@ static VALUE rdo_sqlite_cast_value(sqlite3_stmt * stmt, int col) {
 static VALUE rdo_sqlite_result_info(sqlite3 * db, sqlite3_stmt * stmt) {
   VALUE info = rb_hash_new();
   rb_hash_aset(info, ID2SYM(rb_intern("insert_id")),
-      INT2NUM(sqlite3_last_insert_rowid(db)));
+      LL2NUM(sqlite3_last_insert_rowid(db)));
   return info;
+}
+
+/** Bind all input values to the statement */
+static void rdo_sqlite_statement_bind_args(sqlite3_stmt * stmt, int argc, VALUE * args) {
+  if (sqlite3_bind_parameter_count(stmt) != argc) {
+    rb_raise(rb_eArgError,
+        "Bind parameter count mismatch: wanted %i, got %i",
+        sqlite3_bind_parameter_count(stmt),
+        argc);
+  }
+
+  VALUE v;
+  int   i = 0;
+
+  for (; i < argc; ++i) {
+    v = args[i];
+
+    if (TYPE(v) == Qnil) {
+      sqlite3_bind_null(stmt, i);
+    } else {
+      if (TYPE(v) != T_STRING) {
+        v = RDO_OBJ_TO_S(v);
+      }
+
+      sqlite3_bind_text(stmt, i + 1,
+          RSTRING_PTR(v), RSTRING_LEN(v), NULL);
+    }
+  }
+}
+
+/** Iterate over all rows in the result and return an Array */
+static VALUE rdo_sqlite_statement_iterate_tuples(sqlite3 * db, sqlite3_stmt * stmt) {
+  int   status;
+  int   col     = 0;
+  int   ncols   = 0;
+  VALUE hash;
+  VALUE tuples  = rb_ary_new();
+
+  while ((status = sqlite3_step(stmt)) == SQLITE_ROW) {
+    hash  = rb_hash_new();
+    ncols = sqlite3_column_count(stmt);
+
+    for (col = 0; col < ncols; ++col) {
+      rb_hash_aset(hash,
+          ID2SYM(rb_intern(sqlite3_column_name(stmt, col))),
+          rdo_sqlite_cast_value(stmt, col));
+    }
+
+    rb_ary_push(tuples, hash);
+  }
+
+  if (status != SQLITE_DONE) {
+    RDO_ERROR("Failed to execute statement: %s", sqlite3_errmsg(db));
+  }
+
+  return tuples;
 }
 
 /** Execute the statement with the given bind parameters and return a Result */
@@ -165,32 +235,10 @@ static VALUE rdo_sqlite_statement_executor_execute(int argc, VALUE * args, VALUE
     RDO_ERROR("Cannot execute execute statement: database is not open");
   }
 
-  int   status;
-  int   col     = 0;
-  int   ncols   = 0;
-  VALUE hash;
-  VALUE tuples  = rb_ary_new();
+  rdo_sqlite_statement_bind_args(executor->stmt, argc, args);
 
-  while ((status = sqlite3_step(executor->stmt)) == SQLITE_ROW) {
-    hash  = rb_hash_new();
-    ncols = sqlite3_column_count(executor->stmt);
-
-    for (col = 0; col < ncols; ++col) {
-      rb_hash_aset(hash,
-          ID2SYM(rb_intern(sqlite3_column_name(executor->stmt, col))),
-          rdo_sqlite_cast_value(executor->stmt, col));
-    }
-
-    rb_ary_push(tuples, hash);
-  }
-
-  if (status != SQLITE_DONE) {
-    RDO_ERROR("Failed to execute statement: %s",
-        sqlite3_errmsg(executor->driver->db));
-  }
-
-  VALUE info = rdo_sqlite_result_info(executor->driver->db, executor->stmt);
-
+  VALUE tuples = rdo_sqlite_statement_iterate_tuples(executor->driver->db, executor->stmt);
+  VALUE info   = rdo_sqlite_result_info(executor->driver->db, executor->stmt);
   sqlite3_reset(executor->stmt);
 
   return RDO_RESULT(tuples, info);

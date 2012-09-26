@@ -174,6 +174,18 @@ describe RDO::SQLite::Driver do
         result.each {|row| rows << row}
         rows.should == [{id: 1, name: "bob"}, {id: 2, name: "jane"}]
       end
+
+      context "using bind parameters" do
+        let(:result) { db.execute("SELECT * FROM test WHERE name = ?", "bob") }
+
+        it "returns a RDO::Result" do
+          result.should be_a_kind_of(RDO::Result)
+        end
+
+        it "provides the #count" do
+          result.count.should == 1
+        end
+      end
     end
   end
 end
