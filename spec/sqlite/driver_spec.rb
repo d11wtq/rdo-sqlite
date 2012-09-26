@@ -112,4 +112,68 @@ describe RDO::SQLite::Driver do
       end
     end
   end
+
+  describe "#execute" do
+    let(:options) { "sqlite::memory:" }
+
+    before(:each) do
+      db.execute <<-SQL
+      CREATE TABLE test (
+        id   INTEGER PRIMARY KEY AUTOINCREMENT,
+        name VARCHAR(32)
+      )
+      SQL
+    end
+
+    context "with a bad query" do
+      let(:result) { db.execute("SELECT * FROM bad_table") }
+
+      it "raises an RDO::Exception" do
+        expect { result }.to raise_error(RDO::Exception)
+      end
+
+      it "provides a meaningful error message" do
+        begin
+          result && fail("RDO::Exception should be raised")
+        rescue RDO::Exception => e
+          e.message.should =~ /bad_table/
+        end
+      end
+    end
+
+    context "with an insert" do
+      let(:result) { db.execute("INSERT INTO test (name) VALUES ('bob')") }
+
+      it "returns a RDO::Result" do
+        result.should be_a_kind_of(RDO::Result)
+      end
+
+      it "provides the #insert_id" do
+        result.insert_id.should == 1
+      end
+    end
+
+    context "with a select" do
+      before(:each) do
+        db.execute("INSERT INTO test (name) VALUES ('bob')")
+        db.execute("INSERT INTO test (name) VALUES ('jane')")
+      end
+
+      let(:result) { db.execute("SELECT * FROM test") }
+
+      it "returns a RDO::Result" do
+        result.should be_a_kind_of(RDO::Result)
+      end
+
+      it "provides the #count" do
+        result.count.should == 2
+      end
+
+      it "allows enumeration of the rows" do
+        rows = []
+        result.each {|row| rows << row}
+        rows.should == [{id: 1, name: "bob"}, {id: 2, name: "jane"}]
+      end
+    end
+  end
 end

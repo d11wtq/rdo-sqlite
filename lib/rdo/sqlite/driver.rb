@@ -9,6 +9,10 @@ module RDO
   module SQLite
     # Main Driver class to hook into sqlite3 API
     class Driver < RDO::Driver
+      def execute(stmt, *args)
+        prepare(stmt).execute(*args)
+      end
+
       private
 
       def filename
