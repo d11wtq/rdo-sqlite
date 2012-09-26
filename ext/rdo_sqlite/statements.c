@@ -199,7 +199,7 @@ static void rdo_sqlite_statement_bind_args(sqlite3_stmt * stmt, int argc, VALUE 
 }
 
 /** Iterate over all rows in the result and return an Array */
-static VALUE rdo_sqlite_statement_iterate_tuples(sqlite3 * db, sqlite3_stmt * stmt) {
+static VALUE rdo_sqlite_statement_extract_tuples(sqlite3 * db, sqlite3_stmt * stmt) {
   int   status;
   int   col     = 0;
   int   ncols   = 0;
@@ -237,7 +237,7 @@ static VALUE rdo_sqlite_statement_executor_execute(int argc, VALUE * args, VALUE
 
   rdo_sqlite_statement_bind_args(executor->stmt, argc, args);
 
-  VALUE tuples = rdo_sqlite_statement_iterate_tuples(executor->driver->db, executor->stmt);
+  VALUE tuples = rdo_sqlite_statement_extract_tuples(executor->driver->db, executor->stmt);
   VALUE info   = rdo_sqlite_result_info(executor->driver->db, executor->stmt);
   sqlite3_reset(executor->stmt);
 
