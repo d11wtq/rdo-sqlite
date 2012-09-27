@@ -113,7 +113,7 @@ static VALUE rdo_sqlite_statement_executor_initialize(VALUE self, VALUE driver) 
 
   int status = sqlite3_prepare_v2(executor->driver->db,
       executor->cmd,
-      strlen(executor->cmd) + 1,
+      (int) strlen(executor->cmd) + 1,
       &(executor->stmt),
       &tail);
 
@@ -201,7 +201,7 @@ static void rdo_sqlite_statement_bind_args(sqlite3_stmt * stmt, int argc, VALUE 
       if (TYPE(v) != T_STRING) v = RDO_OBJ_TO_S(v);
 
       sqlite3_bind_text(stmt, i + 1,
-          RSTRING_PTR(v), RSTRING_LEN(v), NULL);
+          RSTRING_PTR(v), (int) RSTRING_LEN(v), NULL);
     }
   }
 }
