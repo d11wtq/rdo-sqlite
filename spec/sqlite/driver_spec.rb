@@ -231,7 +231,7 @@ describe RDO::SQLite::Driver do
         end
 
         it "provides the #affected_rows" do
-          result.count.should == 2
+          result.affected_rows.should == 2
         end
       end
     end
