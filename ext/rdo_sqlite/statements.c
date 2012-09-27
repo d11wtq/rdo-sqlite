@@ -187,12 +187,18 @@ static void rdo_sqlite_statement_bind_args(sqlite3_stmt * stmt, int argc, VALUE 
   for (; i < argc; ++i) {
     v = args[i];
 
-    if (TYPE(v) == Qnil) {
+    if (v == Qnil) {
       sqlite3_bind_null(stmt, i);
     } else {
-      if (TYPE(v) != T_STRING) {
-        v = RDO_OBJ_TO_S(v);
+      if (v == Qtrue)          v = INT2NUM(1);
+      if (v == Qfalse)         v = INT2NUM(0);
+
+      if ((rb_funcall(v, rb_intern("kind_of?"), 1, rb_cTime) == Qtrue)
+          || rb_funcall(v, rb_intern("kind_of?"), 1, rb_path2class("DateTime"))) {
+        v = rb_funcall(v, rb_intern("strftime"), 1, rb_str_new2("%F %T"));
       }
+
+      if (TYPE(v) != T_STRING) v = RDO_OBJ_TO_S(v);
 
       sqlite3_bind_text(stmt, i + 1,
           RSTRING_PTR(v), RSTRING_LEN(v), NULL);
@@ -248,6 +254,8 @@ static VALUE rdo_sqlite_statement_executor_execute(int argc, VALUE * args, VALUE
 
 /** Initialize the statements framework */
 void Init_rdo_sqlite_statements(void) {
+  rb_require("date");
+
   VALUE mSQLite = rb_path2class("RDO::SQLite");
   rdo_sqlite_cStatementExecutor = rb_define_class_under(
       mSQLite, "StatementExecutor", rb_cObject);
