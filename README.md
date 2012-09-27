@@ -41,6 +41,36 @@ db = RDO.open("sqlite:some/path/to/your.db")
 db = RDO.open("sqlite:/absolute/path/to/your.db")
 ```
 
+## Type casting and bind parameters
+
+SQLite, being a very basic database only has limited type support. Without
+going into the whole discussion about SQLite's "type affinity" and how it
+will effectively store anything in any column declared as any type, know that
+the only internal types it actually stores are:
+
+  - NULL, which converts to nil in Ruby
+  - TEXT, which converts to a UTF-8 encoded String in Ruby
+  - INTEGER, which converts to a Fixnum in Ruby
+  - REAL, which converts to a Float in Ruby
+  - BLOB, which converts to a binary String in Ruby
+
+If you have fields storing date strings etc, they are just Text, so are
+returned as Strings, which you need to convert by hand. SQLite has no actual
+DATE type, even if its date functions operate on strings formatted correctly.
+
+### Boolean types
+
+Because defining fields as BOOLEAN and storing integer 0 or 1 in them is
+common, rdo-sqlite will convert boolean bind parameters to 0 or 1. If you
+actually want to store the String 'true' or 'false', you will need to
+convert it to a String first.
+
+### Character encoding
+
+SQLite does not allow the encoding of an existing database to be changed. It
+only supports two encodings: UTF-8 and UTF-16. rdo-sqlite currently just
+assumes UTF-8 encoding.
+
 ## Contributing
 
 If you find any bugs, please send a pull request if you think you can
