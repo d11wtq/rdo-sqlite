@@ -71,6 +71,15 @@ static VALUE rdo_sqlite_driver_prepare(VALUE self, VALUE cmd) {
   return RDO_STATEMENT(rdo_sqlite_statement_executor_new(self, cmd));
 }
 
+/** Quote a string literal for interpolation into a statement */
+static VALUE rdo_sqlite_driver_quote(VALUE self, VALUE str) {
+  Check_Type(str, T_STRING);
+  char * quoted = sqlite3_mprintf("%q", RSTRING_PTR(str));
+  VALUE new_str = rb_str_new2(quoted);
+  sqlite3_free(quoted);
+  return new_str;
+}
+
 /** Initialize driver class */
 void Init_rdo_sqlite_driver(void) {
   rb_require("rdo");
@@ -84,6 +93,7 @@ void Init_rdo_sqlite_driver(void) {
   rb_define_method(cSQLiteDriver, "open?", rdo_sqlite_driver_open_p, 0);
   rb_define_method(cSQLiteDriver, "close", rdo_sqlite_driver_close, 0);
   rb_define_method(cSQLiteDriver, "prepare", rdo_sqlite_driver_prepare, 1);
+  rb_define_method(cSQLiteDriver, "quote", rdo_sqlite_driver_quote, 1);
 
   Init_rdo_sqlite_statements();
 }

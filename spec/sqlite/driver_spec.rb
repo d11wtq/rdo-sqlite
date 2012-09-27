@@ -270,4 +270,10 @@ describe RDO::SQLite::Driver do
       end
     end
   end
+
+  describe "#quote" do
+    it "returns a value safe to insert into SQL" do
+      db.quote("That's a quote!").should == "That''s a quote!"
+    end
+  end
 end
