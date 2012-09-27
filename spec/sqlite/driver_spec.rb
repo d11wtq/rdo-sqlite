@@ -120,7 +120,8 @@ describe RDO::SQLite::Driver do
       db.execute <<-SQL
       CREATE TABLE test (
         id   INTEGER PRIMARY KEY AUTOINCREMENT,
-        name VARCHAR(32)
+        name VARCHAR(32),
+        age  INTEGER
       )
       SQL
     end
@@ -142,7 +143,7 @@ describe RDO::SQLite::Driver do
     end
 
     context "with an insert" do
-      let(:result) { db.execute("INSERT INTO test (name) VALUES ('bob')") }
+      let(:result) { db.execute("INSERT INTO test (name, age) VALUES ('bob', 12)") }
 
       it "returns a RDO::Result" do
         result.should be_a_kind_of(RDO::Result)
@@ -151,12 +152,24 @@ describe RDO::SQLite::Driver do
       it "provides the #insert_id" do
         result.insert_id.should == 1
       end
+
+      context "using bind parameters" do
+        let(:result) { db.execute("INSERT INTO test (name, age) VALUES (?, ?)", "bob", 12) }
+
+        it "returns a RDO::Result" do
+          result.should be_a_kind_of(RDO::Result)
+        end
+
+        it "provides the #insert_id" do
+          result.insert_id.should == 1
+        end
+      end
     end
 
     context "with a select" do
       before(:each) do
-        db.execute("INSERT INTO test (name) VALUES ('bob')")
-        db.execute("INSERT INTO test (name) VALUES ('jane')")
+        db.execute("INSERT INTO test (name, age) VALUES ('bob', 12)")
+        db.execute("INSERT INTO test (name, age) VALUES ('jane', 23)")
       end
 
       let(:result) { db.execute("SELECT * FROM test") }
@@ -172,7 +185,7 @@ describe RDO::SQLite::Driver do
       it "allows enumeration of the rows" do
         rows = []
         result.each {|row| rows << row}
-        rows.should == [{id: 1, name: "bob"}, {id: 2, name: "jane"}]
+        rows.should == [{id: 1, name: "bob", age: 12}, {id: 2, name: "jane", age: 23}]
       end
 
       context "using bind parameters" do
@@ -185,6 +198,29 @@ describe RDO::SQLite::Driver do
         it "provides the #count" do
           result.count.should == 1
         end
+
+        it "allows enumeration of the rows" do
+          rows = []
+          result.each {|row| rows << row}
+          rows.should == [{id: 1, name: "bob", age: 12}]
+        end
+      end
+    end
+
+    context "with an update" do
+      before(:each) do
+        db.execute("INSERT INTO test (name, age) VALUES ('bob', 12)")
+        db.execute("INSERT INTO test (name, age) VALUES ('jane', 23)")
+      end
+
+      let(:result) { db.execute("UPDATE test SET age = age + 3") }
+
+      it "returns a RDO::Result" do
+        result.should be_a_kind_of(RDO::Result)
+      end
+
+      it "provides the number of #affected_rows" do
+        result.affected_rows.should == 2
       end
     end
   end

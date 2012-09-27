@@ -167,6 +167,8 @@ static VALUE rdo_sqlite_result_info(sqlite3 * db, sqlite3_stmt * stmt) {
   VALUE info = rb_hash_new();
   rb_hash_aset(info, ID2SYM(rb_intern("insert_id")),
       LL2NUM(sqlite3_last_insert_rowid(db)));
+  rb_hash_aset(info, ID2SYM(rb_intern("affected_rows")),
+      LL2NUM(sqlite3_changes(db)));
   return info;
 }
 
