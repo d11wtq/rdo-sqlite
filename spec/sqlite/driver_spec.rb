@@ -236,4 +236,38 @@ describe RDO::SQLite::Driver do
       end
     end
   end
+
+  describe "#prepare" do
+    before(:each) do
+      db.execute("CREATE TABLE test (id integer primary key, name text, age integer)")
+    end
+
+    it "creates a RDO::Statement" do
+      db.prepare("INSERT INTO test (name, age) VALUES (?, ?)").should be_a_kind_of(RDO::Statement)
+    end
+
+    context "when executed" do
+      let(:stmt) { db.prepare("INSERT INTO test (name, age) VALUES (?, ?)") }
+
+      it "returns a RDO::Result" do
+        stmt.execute("bob", 27).should be_a_kind_of(RDO::Result)
+      end
+
+      context "multiple times" do
+        before(:each) do
+          stmt.execute("bob", 27)
+          stmt.execute("jim", 19)
+        end
+
+        it "returns a Result for each execution" do
+          stmt2 = db.prepare("SELECT * FROM test WHERE name = ?")
+          result1 = stmt2.execute("bob")
+          result2 = stmt2.execute("jim")
+
+          result1.first[:age].should == 27
+          result2.first[:age].should == 19
+        end
+      end
+    end
+  end
 end
