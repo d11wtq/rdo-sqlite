@@ -222,6 +222,18 @@ describe RDO::SQLite::Driver do
       it "provides the number of #affected_rows" do
         result.affected_rows.should == 2
       end
+
+      context "using bind parameters" do
+        let(:result) { db.execute("UPDATE test SET age = age + ?", 2) }
+
+        it "returns a RDO::Result" do
+          result.should be_a_kind_of(RDO::Result)
+        end
+
+        it "provides the #affected_rows" do
+          result.count.should == 2
+        end
+      end
     end
   end
 end
