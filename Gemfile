@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in rdo-postgres.gemspec
 gemspec
 
 # allow a local version of RDO to be used during dev
