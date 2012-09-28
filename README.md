@@ -3,6 +3,8 @@
 This is the SQLite3 driver for [RDO—Ruby Data Objects]
 (https://github.com/d11wtq/rdo).
 
+[![Build Status](https://secure.travis-ci.org/d11wtq/rdo-sqlite.png?branch=master)](http://travis-ci.org/d11wtq/rdo-sqlite)
+
 Refer to the RDO project [README](https://github.com/d11wtq/rdo) for usage
 information.
 
