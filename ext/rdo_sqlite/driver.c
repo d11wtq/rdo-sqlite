@@ -68,7 +68,7 @@ static VALUE rdo_sqlite_driver_close(VALUE self) {
 
 /** Create a new prepared statement for cmd */
 static VALUE rdo_sqlite_driver_prepare(VALUE self, VALUE cmd) {
-  return RDO_STATEMENT(rdo_sqlite_statement_executor_new(self, cmd));
+  return rdo_sqlite_statement_executor_new(self, cmd);
 }
 
 /** Quote a string literal for interpolation into a statement */
