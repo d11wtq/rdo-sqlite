@@ -81,13 +81,13 @@ static VALUE rdo_sqlite_driver_quote(VALUE self, VALUE str) {
   char          * b   = buf;
   char          * s   = raw;
 
-  /** Not using sqlite3_mprintf() due to \0 check & performance */
+  // not using sqlite3_mprintf() due to \0 check & performance
   for (; (unsigned long) (s - raw) < len; ++s, ++b) {
     switch (*s) {
       case '\0':
         free(buf);
         rb_raise(rb_eArgError,
-            "Cannot #quote binary data. Use #prepare or #execute.");
+            "Cannot #quote binary data. Use #prepare, #execute or a hex X'AABB' literal.");
         break;
 
       case '\'':
