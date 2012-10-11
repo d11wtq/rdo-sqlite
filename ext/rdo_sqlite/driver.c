@@ -74,10 +74,34 @@ static VALUE rdo_sqlite_driver_prepare(VALUE self, VALUE cmd) {
 /** Quote a string literal for interpolation into a statement */
 static VALUE rdo_sqlite_driver_quote(VALUE self, VALUE str) {
   Check_Type(str, T_STRING);
-  char * quoted = sqlite3_mprintf("%q", RSTRING_PTR(str));
-  VALUE new_str = rb_str_new2(quoted);
-  sqlite3_free(quoted);
-  return new_str;
+
+  char          * raw = RSTRING_PTR(str);
+  unsigned long   len = RSTRING_LEN(str);
+  char          * buf = malloc(sizeof(char) * len * 2);
+  char          * b   = buf;
+  char          * s   = raw;
+
+  /** Not using sqlite3_mprintf() due to \0 check & performance */
+  for (; (unsigned long) (s - raw) < len; ++s, ++b) {
+    switch (*s) {
+      case '\0':
+        free(buf);
+        rb_raise(rb_eArgError,
+            "Cannot #quote binary data. Use #prepare or #execute.");
+        break;
+
+      case '\'':
+        *(b++) = *s;
+
+      default:
+        *b = *s;
+    }
+  }
+
+  VALUE quoted = rb_str_new(buf, b - buf);
+  free(buf);
+
+  return quoted;
 }
 
 /** Initialize driver class */
