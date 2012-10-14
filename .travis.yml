@@ -4,5 +4,6 @@ script: "bundle exec rake spec"
 rvm:
   - 1.9.2
   - 1.9.3
+  - rbx-2.0.0-dev
 notifications:
   email: chris@w3style.co.uk
