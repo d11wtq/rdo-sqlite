@@ -146,7 +146,7 @@ static VALUE rdo_sqlite_cast_value(sqlite3_stmt * stmt, int col) {
       return LL2NUM(sqlite3_column_int64(stmt, col));
 
     case SQLITE_FLOAT:
-      return DBL2NUM(sqlite3_column_double(stmt, col));
+      return RDO_FLOAT(sqlite3_column_text(stmt, col));
 
     case SQLITE_TEXT:
       return RDO_STRING((const char *) sqlite3_column_text(stmt, col),
