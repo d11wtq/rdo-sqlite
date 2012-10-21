@@ -5,8 +5,8 @@ This is the SQLite3 driver for [RDO—Ruby Data Objects]
 
 [![Build Status](https://secure.travis-ci.org/d11wtq/rdo-sqlite.png?branch=master)](http://travis-ci.org/d11wtq/rdo-sqlite)
 
-Refer to the RDO project [README](https://github.com/d11wtq/rdo) for usage
-information.
+Refer to the [RDO project README](https://github.com/d11wtq/rdo) for full
+usage information.
 
 ## Installation
 
@@ -27,7 +27,6 @@ And install with Bundler:
 The registered URI schemes are sqlite: and sqlite3:
 
 ``` ruby
-require "rdo"
 require "rdo-sqlite"
 
 # use an in-memory database :memory:
@@ -43,35 +42,63 @@ db = RDO.open("sqlite:some/path/to/your.db")
 db = RDO.open("sqlite:/absolute/path/to/your.db")
 ```
 
-## Type casting and bind parameters
+## Type support
 
-SQLite, being a very basic database only has limited type support. Without
-going into the whole discussion about SQLite's "type affinity" and how it
-will effectively store anything in any column declared as any type, know that
-the only internal types it actually stores are:
+SQLite has extremely limited type support. In fact, it only supports five
+types. It allows other types to be specified as column types, but they will
+be one of the core five types. It also allows storing any value of any type
+in any column, regardless of what the column type is. You can read about that
+[here](http://www.sqlite.org/datatype3.html).
 
-  - NULL, which converts to nil in Ruby
-  - TEXT, which converts to a UTF-8 encoded String in Ruby
-  - INTEGER, which converts to a Fixnum in Ruby
-  - REAL, which converts to a Float in Ruby
-  - BLOB, which converts to a binary String in Ruby
+The five data types are mapped as below:
 
-If you have fields storing date strings etc, they are just Text, so are
-returned as Strings, which you need to convert by hand. SQLite has no actual
-DATE type, even if its date functions operate on strings formatted correctly.
+<table>
+  <thead>
+    <tr>
+      <th>SQLite Type</th>
+      <th>Ruby Type</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>NULL</th>
+      <td>NilClass</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>TEXT</th>
+      <td>String</td>
+      <td>The encoding is always UTF-8</td>
+    </tr>
+    <tr>
+      <th>INTEGER</th>
+      <td>Fixnum</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>REAL</th>
+      <td>Float</td>
+      <td></td>
+    </tr>
+    <tr>
+      <th>BLOB</th>
+      <td>String</td>
+      <td>The encoding is always ASCII-8BIT/BINARY</td>
+    </tr>
+  </tbody>
+</table>
 
 ### Boolean types
 
 Because defining fields as BOOLEAN and storing integer 0 or 1 in them is
-common, rdo-sqlite will convert boolean bind parameters to 0 or 1. If you
-actually want to store the String 'true' or 'false', you will need to
-convert it to a String first.
+common, rdo-sqlite will convert boolean bind parameters to 0 or 1.
 
 ### Character encoding
 
 SQLite does not allow the encoding of an existing database to be changed. It
-only supports two encodings: UTF-8 and UTF-16. rdo-sqlite currently just
-assumes UTF-8 encoding.
+only supports two encodings for new databases: UTF-8 and UTF-16. rdo-sqlite
+currently just assumes UTF-8 encoding. Support for UTF-16 is planned.
 
 ## Contributing
 
@@ -79,8 +106,7 @@ If you find any bugs, please send a pull request if you think you can
 fix it, or file in an issue in the issue tracker.
 
 When sending pull requests, please use topic branches—don't send a pull
-request from the master branch of your fork, as that may change
-unintentionally.
+request from the master branch of your fork.
 
 Contributors will be credited in this README.
 
