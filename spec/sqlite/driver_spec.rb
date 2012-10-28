@@ -73,6 +73,14 @@ describe RDO::SQLite::Driver do
         end
       end
     end
+
+    context "in read-only mode" do
+      let(:options) { "sqlite::memory:?mode=readonly" }
+
+      it "opens the database" do
+        db.should be_open
+      end
+    end
   end
 
   describe "#close" do
@@ -233,6 +241,35 @@ describe RDO::SQLite::Driver do
         it "provides the #affected_rows" do
           result.affected_rows.should == 2
         end
+      end
+    end
+  end
+
+  context "in readonly mode" do
+    let(:options) { "sqlite:./tmp/test.db?mode=readonly" }
+
+    before(:each) do
+      RDO.open("sqlite:./tmp/test.db?mode=rw") do |db|
+        db.execute("CREATE TABLE bob (id integer primary key)")
+        db.close
+      end
+    end
+
+    after(:each) do
+      File.delete("./tmp/test.db") rescue nil
+    end
+
+    context "on write" do
+      it "raises an RDO::Exception on write" do
+        expect {
+          db.execute("DROP TABLE bob")
+        }.to raise_error(RDO::Exception)
+      end
+    end
+
+    context "on read" do
+      it "returns an RDO::Result" do
+        db.execute("SELECT * FROM bob").should be_a_kind_of(RDO::Result)
       end
     end
   end

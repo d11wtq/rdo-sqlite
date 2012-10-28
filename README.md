@@ -40,6 +40,9 @@ db = RDO.open("sqlite:some/path/to/your.db")
 
 # use an absolute path to a database
 db = RDO.open("sqlite:/absolute/path/to/your.db")
+
+# open in read-only mode
+db = RDO.open("sqlite:/path/to/your.db?mode=readonly")
 ```
 
 ## Type support

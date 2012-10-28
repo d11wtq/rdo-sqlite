@@ -26,6 +26,14 @@ static VALUE rdo_sqlite_driver_allocate(VALUE klass) {
   return Data_Wrap_Struct(klass, 0, rdo_sqlite_driver_free, driver);
 }
 
+/** Set the correct mode flags, based on the driver options */
+static int rdo_sqlite_driver_mode(VALUE self) {
+  if (rb_funcall(self, rb_intern("readonly?"), 0) == Qtrue)
+    return SQLITE_OPEN_READONLY;
+  else
+    return SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+}
+
 /** Opens a database */
 static VALUE rdo_sqlite_driver_open(VALUE self) {
   RDOSQLiteDriver * driver;
@@ -38,7 +46,7 @@ static VALUE rdo_sqlite_driver_open(VALUE self) {
   if (sqlite3_open_v2(
         RSTRING_PTR(rb_funcall(self, rb_intern("filename"), 0)),
         &(driver->db),
-        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL) != SQLITE_OK) {
+        rdo_sqlite_driver_mode(self), NULL) != SQLITE_OK) {
     RDO_ERROR("SQLite3 database open failed: %s", sqlite3_errmsg(driver->db));
   } else {
     driver->is_open = 1;
