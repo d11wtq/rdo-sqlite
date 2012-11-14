@@ -1,8 +1,6 @@
 language: ruby
 services: sqlite3
-script:
-  - bundle exec rake spec
-  - bundle exec rspec spec/sqlite/driver_spec.rb
+script: bundle exec rake spec
 rvm:
   - 1.9.2
   - 1.9.3
